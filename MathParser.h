@@ -13,7 +13,8 @@ public:
     void removeSpaces(std::string& expr);
     // std::vector<Token> getParsedExpression() { return this->parsedExpression; }    void clearStack();
 private:
-    std::map <char, int> operatorMap;
+    std::map <std::string , std::pair<int, int>> operatorMap;
     std::vector<std::string> parsedExpression;
+    std::vector<Token> tokenizedExpression;
 };
 #endif //CALCULATOR_CPP_MATHPARSER_H

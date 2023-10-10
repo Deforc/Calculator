@@ -11,7 +11,7 @@ int main() {
     operatorMap['*'] = { 2 };
     operatorMap['/'] = { 2 };
     std::vector<std::string> parsedExpression;
-    std::string s = "58+28sin(90)-1745+cos(90)-2^4+5gcd10";
+    std::string s = "-(4)+(-58+28)-1745*4-24+510/1+2^4";
     std::string buffer = "";
     for (char c : s)
     {
@@ -48,5 +48,22 @@ int main() {
     for (int i = 0 ; i < parsedExpression.size(); i++)
     {
         std::cout << "\"" << parsedExpression[i] << "\"" << " ";
+    }
+
+    std::cout << std::endl;
+    for (int i = 0; i < parsedExpression.size(); i++) {
+        if (parsedExpression[0].find("-") == 0) {
+            parsedExpression[0 + 1].insert(0, "-");
+            parsedExpression[0].replace(0, 1, "0");
+            parsedExpression.insert(parsedExpression.begin() + 1, "+");
+            i+=2;
+        }
+        else if ((parsedExpression[i].find("-") == 0 && parsedExpression[i-1] == "(")) {
+            parsedExpression[i + 1].insert(0, "-");
+            parsedExpression.insert(parsedExpression.begin() + i + 1, "+");
+            parsedExpression[i].replace(0, 1, "0");
+            i+=2;
+            //to_tokenize[i].erase("-");
+        }
     }
 }
