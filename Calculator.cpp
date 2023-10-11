@@ -2,6 +2,8 @@
 
 Calculator::Calculator(std::string pluginDirectory) {
     this->pluginDirectory = pluginDirectory;
+    setOperators();
+    setFuncFromDll();
 }
 
 void Calculator::clearStacks() {
@@ -13,6 +15,50 @@ void Calculator::clearStacks() {
     }
     while (!rpn.empty()) {
         rpn.pop_back();
+    }
+}
+
+void Calculator::getFuncFromDLL(const std::string &filename) {
+    HMODULE hm = LoadLibraryA((pluginDirectory + filename).c_str());
+    if (hm == nullptr) {
+        throw std::runtime_error("dll not found");
+    }
+
+    std::string funcDefinition = reinterpret_cast<const char *>(GetProcAddress(hm, "funcDefinition"));
+    std::string funcName = reinterpret_cast<const char *>(GetProcAddress(hm, "funcName"));
+    int* arity = reinterpret_cast<int *>(GetProcAddress(hm, "arity"));
+
+    if(*arity == 1)
+    {
+        std::function<double(double)> importFunc = reinterpret_cast<double(*)(double)>(GetProcAddress(hm, funcName.c_str()));
+        if (!importFunc) {
+            throw std::runtime_error("failed to load function");
+        }
+        this->unaryFunctions.push_back({ importFunc, funcDefinition });
+    } else if(*arity == 2)
+    {
+        std::function<double(double,double )> importFunc = reinterpret_cast<double(*)(double, double )>(GetProcAddress(hm, funcName.c_str()));
+        if (!importFunc) {
+            throw std::runtime_error("failed to load function");
+        }
+        this->binaryFunctions.push_back({ importFunc, funcDefinition });
+    }
+
+
+}
+
+void Calculator::setFuncFromDll() {
+    WIN32_FIND_DATAA wfd;
+    HANDLE const hFind = FindFirstFileA((this->pluginDirectory + std::string("*.dll")).c_str(), &wfd);
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            std::string dllFileName(wfd.cFileName);
+            getFuncFromDLL(dllFileName);
+        } while (NULL != FindNextFileA(hFind, &wfd));
+        FindClose(hFind);
+    }
+    else {
+        throw std::runtime_error("path not found");
     }
 }
 

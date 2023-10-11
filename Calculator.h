@@ -4,6 +4,8 @@
 #include "Function.h"
 #include <stack>
 #include <exception>
+#include <Windows.h>
+
 class Calculator {
 public:
     Calculator(std::string pluginDirectory);
@@ -25,7 +27,7 @@ private:
 
     void setOperators();
     void setFuncFromDll();
-    void getFuncFromDLL();
+    void getFuncFromDLL(const std::string& filename);
 };
 
 

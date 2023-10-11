@@ -1,15 +1,18 @@
 #include "MathParser.h"
 #include <algorithm>
+
 MathParser::MathParser() {
     this->operatorMap["("] = { LEFT_BRACKET, HIGH };
     this->operatorMap[")"] = { RIGHT_BRACKET, HIGH };
     this->operatorMap["+"] = { OPERATOR, LOW };
     this->operatorMap["-"] = { OPERATOR, LOW };
-    this->operatorMap["*"] = { OPERATOR, UPPER_LOW };
-    this->operatorMap["/"] = { OPERATOR, UPPER_LOW };
+    this->operatorMap["*"] = { OPERATOR, MEDIUM };
+    this->operatorMap["/"] = { OPERATOR, MEDIUM };
 }
 
 void MathParser::clearStack() {
+    while (!tokenizedExpression.empty())
+        tokenizedExpression.pop_back();
     while (!parsedExpression.empty())
         parsedExpression.pop_back();
 }
@@ -28,17 +31,31 @@ void MathParser::parseExpression(std::string& expr) {
     for(char c : expr) {
         if(c == '(') bracketCounter++;
         if(c == ')') bracketCounter--;
-        if(bracketCounter < 0) throw std::invalid_argument ("Incorrect bracket input");
+        if(bracketCounter < 0) throw std::runtime_error ("Incorrect bracket input");
     }
-    if(bracketCounter != 0) throw std::invalid_argument ("Incorrect bracket input");
+    if(bracketCounter != 0) throw std::runtime_error ("Incorrect bracket input");
     //-----------------------Bracket checking----------------------
+
+    //------------------Double operator checking-------------------
+//    for (int i = 0; i < expr.size(); ++i) {
+//        std:: string c = {expr[i]};
+//        if (operatorMap.find({c}) !=  operatorMap.end() && c!="(" && c!=")") {
+//            if(i++ < expr.length()){
+//                c = expr[i];
+//                if(operatorMap.find({c}) !=  operatorMap.end() && c != "(" )
+//                    throw std::runtime_error("Incorrect operator input");
+//                else i--;
+//            }
+//        }
+//    }
+    //------------------Double operator checking-------------------
 
     //-----------------------Parsing expression--------------------
     std::string buffer = "";
     std::string castingString;
     for (char c : expr)
     {
-        if(isdigit(c))
+        if(isdigit(c) || c == '.')
         {
             if(!buffer.empty() && !isdigit(buffer[0])) {
                 parsedExpression.push_back(buffer);
@@ -71,10 +88,14 @@ void MathParser::parseExpression(std::string& expr) {
 
     //-------------------Replacing unary minus---------------------
     for (int i = 0; i < parsedExpression.size(); i++) {
-        if (parsedExpression[0].find("-") == 0) {
+        if (parsedExpression[0].find("-") == 0 && parsedExpression[i+1] != "("){
             parsedExpression[0 + 1].insert(0, "-");
             parsedExpression[0].replace(0, 1, "0");
             parsedExpression.insert(parsedExpression.begin() + 1, "+");
+            i+=1;
+        } else if (parsedExpression[0].find("-") == 0 && parsedExpression[i+1] == "(") {
+            parsedExpression.insert(parsedExpression.begin() + 1, "*");
+            parsedExpression.insert(parsedExpression.begin() + 1, "1");
             i+=2;
         }
         else if ((parsedExpression[i].find("-") == 0 && parsedExpression[i-1] == "(")) {
@@ -83,8 +104,10 @@ void MathParser::parseExpression(std::string& expr) {
             parsedExpression[i].replace(0, 1, "0");
             i+=2;
         }
+
     }
     //-------------------Replacing unary minus---------------------
+
 
     //----------Setting definition, precedence and value-----------
     for (auto elem : parsedExpression) {

@@ -4,7 +4,7 @@
 
 enum tokenDefinition {LEFT_BRACKET = 1, RIGHT_BRACKET = 2, OPERATOR = 3, FUNCTION = 4, NUMBER = 5};
 
-enum precedence { NONE = 0, LOW = 1, UPPER_LOW = 2, MEDIUM = 3, HIGH = 4};
+enum precedence { NONE = -1, LOW = 0, MEDIUM = 2, HIGH = 3};
 
 class Token {
 public:
