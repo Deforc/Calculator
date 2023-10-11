@@ -11,6 +11,7 @@ public:
     Token(std::pair<std::pair<int, int>, std::string> token) { this->token = token; };
     std::string getValue() { return this->token.second; }
     int getPrecedence() { return this->token.first.second; }
+    int getDefinition() { return this->token.first.first; }
 private:
     //first - definition, second - precedence, third - value
     std::pair<std::pair<int, int>, std::string> token;
