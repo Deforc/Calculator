@@ -12,6 +12,9 @@ public:
     void reversedPolishNotation (std::vector<Token> tokenizedExpression);
     void clearStacks();
     double solve();
+    void checkIncorrectInput(std::vector<Token> tokenizedExpression);
+    void removeUnMinus(std::vector<Token> tokenizedExpression);
+
 
 private:
     std::vector<Token> rpn;
@@ -22,8 +25,10 @@ private:
     std::stack<double> digitStack;
     std::string pluginDirectory;
 
-    UnaryFunction checkUnary(Token token);
-    BinaryFunction checkBinary(Token token);
+    UnaryFunction getUnary(Token token);
+    BinaryFunction getBinary(Token token);
+    UnaryFunction* checkUnary(Token token);
+    BinaryFunction* checkBinary(Token token);
 
     void setOperators();
     void setFuncFromDll();

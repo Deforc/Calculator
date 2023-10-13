@@ -24,21 +24,21 @@ void Calculator::getFuncFromDLL(const std::string &filename) {
         throw std::runtime_error("dll not found");
     }
 
-    std::string funcDefinition = reinterpret_cast<const char *>(GetProcAddress(hm, "funcDefinition"));
-    std::string funcName = reinterpret_cast<const char *>(GetProcAddress(hm, "funcName"));
+    std::string funcDefinition (reinterpret_cast<char *>(GetProcAddress(hm, "funcDefinition")));
+    std::string funcName (reinterpret_cast<char *>(GetProcAddress(hm, "funcName")));
     int* arity = reinterpret_cast<int *>(GetProcAddress(hm, "arity"));
 
     if(*arity == 1)
     {
         std::function<double(double)> importFunc = reinterpret_cast<double(*)(double)>(GetProcAddress(hm, funcName.c_str()));
-        if (!importFunc) {
+        if (importFunc == nullptr) {
             throw std::runtime_error("failed to load function");
         }
         this->unaryFunctions.push_back({ importFunc, funcDefinition });
     } else if(*arity == 2)
     {
         std::function<double(double,double )> importFunc = reinterpret_cast<double(*)(double, double )>(GetProcAddress(hm, funcName.c_str()));
-        if (!importFunc) {
+        if (importFunc == nullptr) {
             throw std::runtime_error("failed to load function");
         }
         this->binaryFunctions.push_back({ importFunc, funcDefinition });
@@ -69,21 +69,64 @@ void Calculator::setOperators() {
     this->binaryFunctions.push_back({ [](double fst, double snd) { return fst / snd; }, "/" });
 }
 
-UnaryFunction Calculator::checkUnary(Token token) {
-    for (auto func : unaryFunctions) {
-        if (func.getName() == token.getValue())
-            return func;
-    }
+UnaryFunction Calculator::getUnary(Token token) {
+    if(checkUnary(token) != nullptr)
+        return *checkUnary(token);
+
     throw std::runtime_error("Function isn`t found");
 
 }
 
-BinaryFunction Calculator::checkBinary(Token token) {
-    for (auto func : binaryFunctions) {
+UnaryFunction *Calculator::checkUnary(Token token) {
+    for (auto &func : unaryFunctions) {
         if (func.getName() == token.getValue())
-            return func;
+            return &func;
     }
+    return nullptr;
+}
+
+BinaryFunction Calculator::getBinary(Token token) {
+    if(checkBinary(token) != nullptr)
+        return *checkBinary(token);
+
     throw std::runtime_error("Function isn`t found");
+}
+
+BinaryFunction *Calculator::checkBinary(Token token) {
+    for (auto &func : binaryFunctions) {
+        if (func.getName() == token.getValue())
+            return &func;
+    }
+    return nullptr;
+}
+
+void Calculator::checkIncorrectInput(std::vector<Token> tokenizedExpression) {
+    if (checkBinary(tokenizedExpression[0]) != nullptr)
+        throw std::runtime_error ("Incorrect input: binary operator can`t be first");
+
+    if(checkBinary(tokenizedExpression.back()) != nullptr || checkUnary(tokenizedExpression.back()) != nullptr)
+        throw std::runtime_error ("incorrect input");
+
+    for (int i = 0 ; i < tokenizedExpression.size(); i++)
+    {
+        if(checkBinary(tokenizedExpression[i]) != nullptr && checkBinary(tokenizedExpression[i+1]) != nullptr)
+            throw std::runtime_error("Incorrect input: you can`t use double binary operator");
+        if(checkUnary(tokenizedExpression[i]) != nullptr && checkBinary(tokenizedExpression[i+1]) != nullptr)
+            throw std::runtime_error("Incorrect input: you can`t use unary and then binary operators");
+        if(tokenizedExpression[i].getDefinition() == NUMBER && checkUnary(tokenizedExpression[i]) != nullptr)
+            throw std::runtime_error("Incorrect input: you can`t use number and then unary operator");
+    }
+
+}
+
+void Calculator::removeUnMinus(std::vector<Token> tokenizedExpression) {
+    for (int i = 0; i < tokenizedExpression.size(); i++) {
+        if ((tokenizedExpression[i].getValue() == "-" && tokenizedExpression[i-1].getValue() == "(" /*digit check*/)) {
+            tokenizedExpression[i + 1].setValue({{NUMBER, NONE}, "-" + tokenizedExpression[1].getValue()});
+            tokenizedExpression.erase(tokenizedExpression.begin()+i);
+            i++;
+        }
+    }
 }
 
 void Calculator::reversedPolishNotation(std::vector<Token> tokenizedExpression) {
@@ -139,13 +182,13 @@ double Calculator::solve() {
         if(token.getDefinition() == NUMBER)
             digitStack.push(std::stod(token.getValue()));
         else if (token.getDefinition() == FUNCTION && !digitStack.empty()) {
-            unaryFunc = checkUnary(token);
+            unaryFunc = getUnary(token);
             unaryFunc.setArguments(digitStack.top());
             digitStack.pop();
             digitStack.push(unaryFunc.substitution());
         }
         else if (token.getDefinition() == OPERATOR && !digitStack.empty()) {
-            binaryFunc = checkBinary(token);
+            binaryFunc = getBinary(token);
             double argumentR = digitStack.top();
             digitStack.pop();
             if(!digitStack.empty())
@@ -162,5 +205,8 @@ double Calculator::solve() {
     }
     return digitStack.top();
 }
+
+
+
 
 

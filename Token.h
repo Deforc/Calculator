@@ -12,6 +12,7 @@ public:
     std::string getValue() { return this->token.second; }
     int getPrecedence() { return this->token.first.second; }
     int getDefinition() { return this->token.first.first; }
+    void setValue( std::pair<std::pair<int, int>, std::string> token) { this->token.second = token.second; }
 private:
     //first - definition, second - precedence, third - value
     std::pair<std::pair<int, int>, std::string> token;
