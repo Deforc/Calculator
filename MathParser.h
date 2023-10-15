@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <string>
 #include "Token.h"
 
 class MathParser {
@@ -11,9 +12,10 @@ public:
     void parseExpression(std::string& expr);
     void clearStack();
     void removeSpaces(std::string& expr);
-    // std::vector<Token> getParsedExpression() { return this->parsedExpression; }    void clearStack();
+    std::vector<Token> getTokenizedExpression() { return this->tokenizedExpression; }
 private:
-    std::map <char, int> operatorMap;
+    std::map <std::string , std::pair<int, int>> operatorMap;
     std::vector<std::string> parsedExpression;
+    std::vector<Token> tokenizedExpression;
 };
 #endif //CALCULATOR_CPP_MATHPARSER_H

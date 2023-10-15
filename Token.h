@@ -2,15 +2,20 @@
 #define CALCULATOR_CPP_TOKEN_H
 #include <string>
 
-enum precedence { NONE = 0, LOW = 1, UPPER_LOW = 2, MEDIUM = 3, HIGH = 4};
+enum tokenDefinition {LEFT_BRACKET = 1, RIGHT_BRACKET = 2, OPERATOR = 3, FUNCTION = 4, NUMBER = 5};
+
+enum precedence { NONE = -1, LOW = 0, MEDIUM = 2, HIGH = 3};
 
 class Token {
 public:
-    Token(std::pair<int, std::string> token) { this->token = token; };
+    Token(std::pair<std::pair<int, int>, std::string> token) { this->token = token; };
     std::string getValue() { return this->token.second; }
-    int getPrecedence() { return this->token.first; }
+    int getPrecedence() { return this->token.first.second; }
+    int getDefinition() { return this->token.first.first; }
+    void setValue( std::pair<std::pair<int, int>, std::string> token) { this->token.second = token.second; }
 private:
-    std::pair<int, std::string> token;
+    //first - definition, second - precedence, third - value
+    std::pair<std::pair<int, int>, std::string> token;
 };
 
 
